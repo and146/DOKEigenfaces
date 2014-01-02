@@ -29,8 +29,6 @@ import and146.projects.eigenfaces.domain.TrainingSet;
 import and146.projects.eigenfaces.opencv.InMemoryGrayscaleImage;
 import and146.projects.eigenfaces.opencv.InMemoryImage;
 
-import com.sun.xml.internal.txw2.IllegalSignatureException;
-
 /**
  * FAce recognizer using PCA/eigenfaces algorithm.
  * 
@@ -315,7 +313,7 @@ public class EigenfacesRecognizer implements IFaceRecognizer {
 				int i = 0;
 				for (String personId : inputTrainingData.keySet()) {
 					if (inputTrainingData.get(personId).size() < 2)
-						throw new IllegalSignatureException("At least two faces of each person are required for this scenario.");
+						throw new IllegalStateException("At least two faces of each person are required for this scenario.");
 					
 					// deep copy of the input data for restoring at the end of the test
 					List<String> paths = new LinkedList<String>();
