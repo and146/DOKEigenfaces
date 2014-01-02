@@ -25,11 +25,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.sun.xml.internal.txw2.IllegalSignatureException;
-
 import and146.projects.eigenfaces.domain.TrainingSet;
 import and146.projects.eigenfaces.opencv.InMemoryGrayscaleImage;
 import and146.projects.eigenfaces.opencv.InMemoryImage;
+
+import com.sun.xml.internal.txw2.IllegalSignatureException;
 
 /**
  * FAce recognizer using PCA/eigenfaces algorithm.
