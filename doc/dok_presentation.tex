@@ -1,0 +1,352 @@
+\documentclass{beamer}
+\mode<presentation>{
+	\usetheme{Warsaw}
+	\usecolortheme{beetle}
+	\setbeamercovered{transparent}
+}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}
+%\usepackage{a4wide}
+\usepackage{graphicx}
+\usepackage{courier}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\usepackage{ucs}
+\usepackage{palatino}
+
+\author{\textbf{David Andrešič}}
+\title{\textbf{Dokumentografické informační systémy} \\ Projekt: \textit{Rozpoznání člověka z obrazu pomocí metody PCA}}
+\institute[ ]{VŠB - Technická univerzita Ostrava}
+\date{\today}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%% TITULKA %%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%% OSNOVA %%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Obsah}
+  %\tableofcontents[pausesections] <-- pausesections = na klepnuti
+  \tiny  
+  \tableofcontents
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%% TEORET. UVOD %%%%%%%%%%%%%%%%
+
+\section{Motivace}
+\begin{frame}
+
+\begin{center}
+\frametitle{Motivace a problémy}
+	\huge Motivace a problémy\\[1.5cm]
+	\large Motivace
+\end{center}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Motivace}
+... aneb \textit{"NSA a ti další"} ...
+\begin{itemize}
+	\item bezpečnostní složky, agentury
+	\item různí správcové (autentizace)
+	\item identifikace zločince z kamerového záznamu
+	\item možnost najít na fotkách z poslední akce své (mnohdy nové) kamarády
+	\item ...
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Implementační problémy a výhody}
+
+\begin{itemize}
+	\item záběry jsou zpravidla pořizovány za různých podmínek
+	\item nízká intenzita osvětlení, šum v obrazu, úhel natočení hlavy, ...
+	\item nejširší uplatnění především tam, kde je možné kontrolovat podmínky, za kterých jsou tyto obrazy pořizovány
+	\item $=>$ biometrická metoda autentizace (na rozdíl od PINů, hesel, ...)
+	\item na rozdíl od otisků prstů, sítnice, apod. dvě zásadní výhody: 
+		\begin{itemize}
+			\item je nejméně invazní
+			\item je relativně levná		
+		\end{itemize}			
+\end{itemize}
+\end{frame}
+
+\section{State of the art - identifikace obličeje v obrazu}
+\begin{frame}
+
+\begin{center}
+\frametitle{State of the art - identifikace obličeje v obrazu}
+	\huge State of the art - identifikace obličeje v obrazu\\[1.5cm]
+	\large Metody
+\end{center}
+
+\end{frame}
+
+\subsection{Metody}
+\begin{frame}
+\frametitle{Metody}
+\begin{itemize}
+	\item Vyhledávání jednotlivých částí obličeje
+	\item Holistické metody
+		\begin{itemize}
+			\item Statistické metody
+			\item AI metody
+		\end{itemize}
+\end{itemize}
+\end{frame}
+
+\subsection{Vyhledávání jednotlivých částí obličeje}
+\begin{frame}
+\frametitle{Vyhledávání jednotlivých částí obličeje}
+\begin{itemize}
+			\item nejstarší metody rozpoznání obličeje
+			\item vzorce typické pro dominantní části obličeje
+			\item oči, ústa, nos, obočí apod.
+			\item měří a počítají jejich vzájemné geometrické vazby
+			\item redukují původní obrázek obličeje do vektoru geometrických vlastností (rysů)
+			\item statistické metody hledající nejlepší shodu
+		\end{itemize}
+\end{frame}
+
+\subsection{Holistické metody}
+\begin{frame}
+\frametitle{Holistické metody}
+\begin{itemize}
+	\item přistupují k obličeji jako k celku
+			\item \textbf{Statistické metody}
+				\begin{itemize}
+					\item pracují s obrazem ve formě jasové matice
+					\item rozpoznání: porovnáním korelací mezi neznámým obličejem a databází známých obličejů
+					\item velmi náchylné na podmínky
+					\item velmi náročné na výpočetní výkon a paměť
+					\item Principal Component Analysis
+				\end{itemize}
+			\item \textbf{AI metody}
+				\begin{itemize}
+					\item využívají k identifikaci obličeje neuronové sítě a nástroje strojového učení.
+					\item obecně jsou tyto metody úspěšnější
+				\end{itemize}
+		\end{itemize}
+\end{frame}
+
+\section{Eigenfaces, Principal Component Analysis}
+\begin{frame}
+\begin{center}
+\frametitle{Eigenfaces, Principal Component Analysis}
+	\huge Eigenfaces, Principal Component Analysis\\[1.5cm]
+	\large Co to je?
+\end{center}
+\end{frame}
+
+%%%%%%%
+
+\subsection{Eigenfaces}
+\begin{frame}
+\frametitle{Eigenfaces - co to je?}
+Ve zkratce:
+\begin{itemize}
+	\item holistická metoda rozpoznání obličeje v obrazu
+	\item vstupní obraz ve formě jasové matice
+	\item tréninková sada - převod na pouze charakteristické (rozdílné) znaky každého obličeje
+	\item představují model každého obličeje
+	\item s ním je porovnáván neznámý obličej určený k identifikaci
+	\item =$>$ 2 fáze:
+		\begin{itemize}
+			\item tréninková
+			\item rozpoznávací
+		\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Eigenfaces - preprocessing}
+Než se pustíme do trénování, je potřeba připravit tréninkovou sadu:
+\begin{itemize}
+			\item oříznout pouze obličej
+			\item převést do grayscale (jasová složka)
+			\item minimalizovat vel. vstup. prostoru
+				\begin{itemize}
+					\item resizingem (např. 64x64px)
+					\item normalizací intenzity (např. 0-255)
+				\end{itemize}							
+		\end{itemize}
+\end{frame}
+
+\subsection{Tréninková fáze}
+
+\begin{frame}
+\frametitle{Eigenfaces - tréninková fáze (1/3)}
+\begin{itemize}
+\tiny
+			\item pomocí \textit{tréninkové sady} - několik fotek ke každé osobě
+			\item převod jas. matice obličeje do \textit{obličejového vektoru} (všechny řádky poskládat za sebe - ($m*n$) -$>$ ($(m*n)*1$)) 
+			\item sestavit \textit{vektorový prostor obličejů} - poskládáním obličejových vektorů "za sebe" do matice
+			\item prostor je silně korelovaný (každý obličej obsahuje oči, nos, ústa, obočí, ...)
+			\item =$>$ můžeme vypočítat \textit{průměrný obličej} (společné znaky všech obličejů v trénink. sadě)
+			\item odečtení průměrného obličeje od každého obličejového vektoru - zůstanou jen znaky jasně charakterizující (odlišující) daný obličej = \textit{normalizovaný obličejový vektor}
+			\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Eigenfaces - tréninková fáze (2/3)}
+Redukce dimenze (PCA):
+			\begin{itemize}
+			\tiny
+			\item označme normalizované obličejové vektory jako matici $A$
+			\item vypočítáme kovarianční matici: $C=AxA^T$
+			\item $C$ obsahuje všechny možné tzv. \textit{eigenvektory} (nebo také \textit{eigenface}) - komponenty jednoho původního obličeje (ten lze zpětně získat lineární kombinací $k$ \textit{eigenvektorů}, kde $k<=$\textit{(počet vstupních obličejů testovací sady)} (+ odečtený \textit{průměrný obličej}))
+			\item \textit{eigenvektor} je česky vlastním vektorem kovarianční matice
+			\item seřazení vlastních vektorů (\textit{eigenvektor}ů) podle jím příslušejících vlastních čísel = seřazení podle důležitosti (=míry popisnosti původního obličeje)
+			\item \textbf{cílem je vybrat $k$ nejvýznamnějších (nejpopisnějších) \textit{eigenvektorů} a zahodit ty méně podstatné =$>$ velmi nepatrné snížení spolehlivosti, ale zásadní redukce dimenze}
+		\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Eigenfaces - tréninková fáze (3/3)}
+Redukce dimenze (PCA) - efektivnější výpočet \textit{eigenvectorů}:
+\begin{itemize}
+\tiny
+			\item problém je velikost $C$ (obrázek 64x64px má jako vektor rozměr 4096x1, $C$ tak má rozměr 4096x4096 - velká časová náročnost hledání vlastních vektorů)
+			\item trik: kovarianční matice s redukovanou dimenzí $C'=A^TxA$ řádu $nxn$ (kde $n$ je počet obličejů ve vstupní \textit{tréninkové sadě})
+			\item získání vlastních vektorů z této matice je řádově rychlejší a úspornější
+			\item získáme $n$ možných eigenvektorů o rozměru $nx1$ (vs. 4096 eigenvektorů o rozměrech 4096x1)
+			\item my ale potřebujeme eigenvektory v původní $C$ s neredukovanou dimenzí, ty získáme mapováním:
+				\begin{itemize}
+				\tiny
+					\item \textit{eigenvektor} v původní dimenzi: $u_i$ 
+					\item \textit{eigenvektor} v redukované \textit{kovarianční matici}: $v_i$
+					\item mapování: $u_i=Av_i$, kde $A$ je matice\textit{normalizovaných obličejových vektorů}
+				\end{itemize}
+		\end{itemize}
+
+\end{frame}
+
+%%%%%%%%
+\subsection{Rozpoznávací fáze}
+\begin{frame}
+\frametitle{Rozpoznávací fáze}
+Rozpoznání neznámého obličeje pak probíhá následovně:
+\begin{itemize}
+	\item preprocessing (viz dřívější text)
+	\item převedení obličeje do \textit{obličejového vektoru}
+	\item normalizace - jako \textit{průměrný obličej} se použije \textit{průměrný obličej} z tréninkové fáze
+	\item vypočítat kombinaci $k$ eigenvektorů - projekce na PCA subspace
+	\item sestavení\textit{ váhového vektoru} neznámého obličeje (vektor $k$ nejvýznamnějších eigenvectorů)
+	\item euklidovské porovnání \textit{váhového vektoru} s \textit{váhovými vektory} získanými v tréninkové fázi (výpočet rozdílu, stanovení hranic pro porovnávání)
+\end{itemize}
+
+\end{frame}
+
+
+\section{Popis implementace}
+\begin{frame}
+
+\begin{center}
+\frametitle{Popis implementace}
+	\huge Popis implementace\\[1.5cm]
+	\large Základní use-case
+\end{center}
+
+\end{frame}
+
+\subsection{Základní use-case}
+\begin{frame}
+\frametitle{Základní use-case}
+\begin{itemize}
+	\item Mám k dispozici sadu fotografií známých osob. Tyto nahraji do systému (proběhne tréninková fáze). Dále předložím systému novou, neznámou fotografii a budu chtít identifikovat osobu, která se na fotografii nachází.
+	\item Vstupní data:
+		\begin{itemize}
+			\item Některá z veřejných databází (AT\&T)
+			\item Fotografie by měly být pořízeny za stejných světelných podmínek, stejnou technikou, ze stejné vzdálenosti a se stejným výrazem pro všechny fotografované osoby
+		\end{itemize}
+\end{itemize}
+\end{frame}
+
+
+
+\subsection{Použité technologie}
+\begin{frame}
+\frametitle{Použité technologie}
+
+\begin{itemize}
+	\item systém naprogramován v Javě 1.7
+	\item pro perzistenci výsledků tréninkové fáze použita databáze H2 a ORM/JPA provider Hibernate
+	\item pro práci s obrázky použita knihovna OpenCV a oficiální Java wrapper.
+	\item kompatibilní s OS Windows a Linux
+\end{itemize}
+
+Dále pro sestavení aplikace je potřeba:
+
+\begin{itemize}
+		\item Git
+		\item Java Development Kit 1.7
+		\item Maven $>$=2
+		\item pdflatex pro případne sestavení doprovodného dokumentu a prezentace
+\end{itemize}
+
+\end{frame}
+
+\section{Použití aplikace}
+\begin{frame}[fragile]
+\frametitle{Použití aplikace}
+\tiny
+\begin{verbatim}
+usage: uber-Eigenfaces-1.0-SNAPSHOT.jar
+ -af,--save-average-face <arg>          Saves the average face to a
+                                        specified file.
+ -c,--cleanup-database                  clean up database containing the
+                                        last training set
+ -d,--debug                             enables the debug mode (maximal
+                                        verbosity)
+ -h,--help                              show this help
+ -l,--log <arg>                         enables the logging to a file
+ -p,--persist-training-set              Persists the provided training set
+ -r,--recognize-face <arg>              path to the image file required to
+                                        recognize
+ -t,--training-set-xml <arg>            path to the XML containing the
+                                        training set
+ -te,--test-recognizer-existing-faces   tests the recognizer's confidence
+                                        by attempting to recognize each
+                                        item in the training set
+ -ts,--test-recognizer-skipped-faces    tests the recognizer's confidence
+                                        by attempting to recognize one
+                                        skipped face of each person in the
+                                        training set
+                                        
+\end{verbatim}
+\normalsize
+\end{frame}
+
+\section{Závěr a výsledky}
+\begin{frame}
+\frametitle{Závěr a výsledky}
+Aplikace obsahuje dva vestavěné testovací scénáře:
+
+\begin{itemize}
+	\item První z nich (parametr \textit{-te}) prochází každý obrázek v tréninkové sadě a snaží se jej rozpoznat. Je očekávána 100\% úspěšnost s maximální jistotou rozpoznání, což aplikace splňuje.
+	\item Druhý scénář (parametr \textit{-ts}) vyžaduje, aby ke každé osobě existovaly v tréninkové sadě alespoň dvě fotografie. Následně je od každé osoby jedna fotografie vyjmuta, aplikace je znovu "přetrénována" s touto redukovanou tréninkovou sadou a vyjmuté fotografie jsou použity jako testovací (k rozpoznání). Dosažená úspěšnost je u vzorové testovací sady 97,5\%, což odpovídá výsledkům dosahovaných u eigenfaces algoritmu.
+\end{itemize}
+\end{frame}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%% PODEKOVANI %%%%%%%%%%%%%%%%
+
+\begin{frame}
+\begin{center}
+	\large \textit{... děkuji za pozornost ...}
+\end{center}
+\end{frame}
+
+
+\end{document}

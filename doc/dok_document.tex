@@ -1,0 +1,452 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{float}
+\author{David Andrešič}
+\title{Dokumentografické informační systémy}
+\begin{document}
+
+\begin{titlepage}
+%\maketitle
+
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft}
+VŠB-TUO
+\end{flushleft}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+\begin{flushright}
+Datum: \today
+\end{flushright}
+\end{minipage}\\[5.0cm]
+
+%\vfill
+
+%\HRule \\[0.4cm]
+\begin{center}
+
+{\huge \bfseries Dokumentografické informační systémy}\\[1.0cm]
+{\huge Projekt}\\[1.5cm]
+{\large Rozpoznání člověka z obrazu pomocí metody PCA}\\[4cm]
+
+\end{center}
+
+%\begin{tabular}{c|l}
+%	{\bf Příklad} & {\bf Poznámky} \\
+	
+%	\hline\\[0.2cm]
+	
+%	1 &  \\[1.5cm]
+%	2 &  \\[1.5cm]
+%\end{tabular}
+
+\vfill
+
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft}
+\begin{tabular}{lp{9cm}}
+Vypracoval:&	David Andrešič	\\
+\end{tabular}
+\end{flushleft}
+\end{minipage}
+
+\end{titlepage}
+%\fontsize{3mm}{3mm}\selectfont
+\tableofcontents
+
+\section{Motivace}
+
+Schopnost rozpoznat člověka na obrázku byla dlouho snem v různých profesích zahrnujících
+např. bezpečnostní složky, agentury či prosté správce. Prvně uvedeným umožňuje např. identifikovat
+zločince z kamerového záznamu, všem společně pak poměrně spolehlivou a pohodlnou možnost
+autentizace. I obyčejným lidem však nabídne např. možnost najít na fotkách z poslední akce
+své (mnohdy nové) kamarády.
+
+Rozpoznávání člověka však přináší řadu problémů, jelikož záběry jsou zpravidla pořizovány za různých podmínek
+a samotná detekce obličeje v obraze zde naráží na problémy s nízkou intenzitou osvětlení, šumem v obrazu, úhlem natočení
+hlavy apod. Pokud se tedy vůbec povede v obraze obličej najít, bude jeho rozpoznání o to těžší. Proto najde rozpoznávání
+obličejů nejširší uplatnění především tam, kde je možné kontrolovat podmínky, za kterých jsou tyto obrazy pořizovány, tj.
+typicky autentizace osoby. Ta na rozdíl od starších metod (hesla, PINy, různé plastové karty) spadá do kategorie 
+biometrických metod, kde najdeme také např. metody autentizace založené na snímání otisků prstů, sítnice apod. Na rozdíl
+od nich však má rozeznání obličeje dvě zásadní výhody: je nejméně invazní a je relativně levná. Osoba nemusí nikde
+přikládat prst, nemusí se nikde nehybně krčit u snímače, pouze se postaví před relativně levnou kameru. O zbytek se
+postará dnes již dostupný software.
+
+Tento projekt je z celé této škály zaměřen na rozpoznání osob na statických obrázcích (fotografiích) pořízených v
+kontrolovaných podmínkách.
+
+\section{State of the art}
+
+V zásadě můžeme metody pro rozpoznání obličeje rozdělit do dvou kategorií: metody založené na vyhledání 
+jednotlivých částí obličeje a tzv. holistické metody beroucí obličej jako celek.
+
+\subsection{Vyhledávání jednotlivých částí obličeje}
+
+Tyto metody vyhledávají v obraze "vzorce" typické pro dominantní části obličeje, jako jsou oči, ústa, nos, obočí apod. Ty
+následně měří a počítají jejich vzájemné geometrické vazby. V zásadě tak redukují původní obrázek obličeje do vektoru 
+geometrických vlastností (rysů). K identifikaci pak používají standardní statistické metody hledající nejlepší shodu.
+Tento přístup používaly nejstarší metody rozpoznání obličeje.
+
+\subsection{Holistické metody}
+
+Jak již bylo nastíněno, přistupují tyto metody k obličeji, resp. jeho obrázku, jako k celku oproti vyhledávání
+jednotlivých obličejových částí. Můžeme je dále rozdělit na metody statistické (na které projekt míří) a metody 
+využívající umělou inteligenci.
+
+\subsubsection{Statistické metody}
+
+Pracují s obrazem ve formě jasové matice. Rozpoznání je pak prováděno porovnáním korelací mezi neznámým obličejem
+a databází známých obličejů.
+
+Obecně jsou tyto metody velmi náchylné na podmínky, za kterých byl obrázek obličeje pořízen a také díky výpočtům
+v prostorech s velkou dimenzí velmi náročné na výpočetní výkon a paměť. Postupně byly vyvinuty metody, které
+tyto nedostatky ve velké míře zmírnily. Jmenovat můžeme např. \textit{Principal Component Analysis (PCA)}, které se věnuje
+část \ref{pca} (a potažmo celý tento projekt) a která zásadně zmenšuje dimenzi vstupního prostoru.
+
+\subsubsection{AI metody}
+
+Využívají k identifikaci obličeje neuronové sítě a nástroje strojového učení. Obecně jsou tyto metody úspěšnější, než
+metody statistické. Zájemce odkážeme na \cite{jafri} obsahující více informací a výsledky různých implementací těchto metod.
+
+\section{Principal Component Analysis (PCA)}
+\label{pca}
+
+Jak již bylo zmíněno, \textit{PCA} je holistická metoda rozpoznání obličeje v obrazu. Její základní princip by se dal
+(abstraktně) charakterizovat tak, že vstupní obraz je ve formě jasové matice tzv. normalizací převeden do podoby, kdy v
+něm zůstanou pouze charakteristické (rozdílné) znaky každého obličeje. Které to jsou? To se pozná na základě tzv. 
+tréninkové sady. Tyto charakteristické rozdíly pak představují model každého obličeje, se kterým je porovnávám neznámý
+obličej, který má být identifikován.
+
+V další části se podíváme na algoritmus podrobněji a více matematicky.
+
+\subsection{PCA podrobněji}
+
+\subsubsection*{Preprocessing}
+
+Jak již bylo zmíněno dříve, pracuje PCA se vstupním obrazem ve formě jasové matice. Tento obraz by také vzhledem k
+vlastnostem statistických metod měl obsahovat pouze obličej dané osoby. Proto je nutné jej před samotným processingem
+nejprve upravit:
+
+\begin{itemize}
+	\item oříznout obrázek tak, aby na něm zůstal jen obličej
+	\item převést obrázek do stupňů šedi (zůstane jen jasová složka)
+\end{itemize}
+
+Dále je za účelem minimalizace velikosti vstupního prostoru (a tím i výpočetní složitosti) provést následující:
+
+\begin{itemize}
+	\item resizing obrázku na nějakou přijatelnou (čtvercovou) hodnotu (např. 64x64px)
+	\item normalizace intenzity (zmenšení škály na nějakou přijatelnou hodnotu - např. 256 úrovní šedi)
+\end{itemize}
+
+K čemu tyto dva kroky? Jak bylo naznačeno dříve, statistické metody pracují v prostorech o velmi vysoké dimenzi. Operace zde prováděné jsou proto výpočetně velmi náročné. PCA sice sama o sobě provádí redukci dimenze, i tak je ale potřeba
+vytvořit vstupní prostor co nejmenší.
+
+\subsubsection*{Tréninková sada}
+
+\textit{Tréninková sada} je sada vstupních obličejů, ze kterých vzejdou matematické modely (ve formě vektorů) jednoznačně
+odlišující jednotlivé obličeje v sadě. S těmito modely je pak neznámý obličej porovnáván a identifikace spočívá
+ve vyhledání statisticky nejbližšího modelu.
+
+Pokud budeme uvažovat, že každý vstupní obrázek v sadě má 64x64 pixelů, máme z každého obrázku celkem 4096 pixelů. Pokud budeme dále uvažovat, že každý pixel může nabývat hodnoty jasu od 0-255 (viz fáze preprocessingu), dostáváme tím velikost
+vstupního prostoru $256^{4096}$. Jak vidíme, i přes poměrně drastické (leč pro jednoznačnou identifikaci pomocí PCA
+stále dostačující) úpravy v preprocessing fázi dostáváme velmi velký vstupní prostor. V některé z dalších částí
+si popíšeme, jak PCA tuto dimenzi dokáže zmenšit.
+
+\subsubsection*{Normalizace vektorů (odečtení \textit{průměrného obličeje})}
+
+PCA nepracuje s jasovou maticí přímo, ale přestaví ji do podoby \textit{obličejového vektoru}. Pokud si tedy vezmeme náš
+příklad, kdy máme vstupní obrázek (resp. \textit{jasovou matici}) o velikosti 64x64px, dostaneme vektor 4096x1 (všech 
+64 řádků se poskládá jednoduše za sebe).
+
+Pokud umístíme tyto vektory reprezentující vstupní obličeje vedle sebe, dostaneme \textit{vektorový prostor obličejů}.
+Tento prostor je silně korelovaný - každý obličej obsahuje oči, nos, ústa, obočí apod. Naším cílem bude najít všechny
+tyto společné znaky ve \textit{vstupní sadě} (resp. \textit{vektorovém prostoru obličejů}). Z tohoto nám vzejde
+tzv. \textit{průměrný obličej}, který odečteme od každého \textit{obličejového vektoru} ve \textit{vektorovém prostoru obličejů}. K čemu je to dobré? Odstraněním všech společných vlastností docílíme toho, že každý \textit{obličejový vektor}
+bude nyní jasně identifikovat daný obličej. Tento \textit{obličejový vektor}, který neobsahuje \textit{průměrný obličej}, nazýváme \textit{normalizovaný obličejový vektor}.
+
+\subsubsection*{Redukce dimenze, eigenfaces}
+
+Označme si nyní \textit{vektorový prostor obličejů} obsahující \textit{normalizované obličejové vektory} jako matici
+\textit{A} a zaveďme si pojem \textit{kovarianční matice} $C=AxA^T$. Tato matice bude obsahovat všechny možné tzv.
+\textit{eigenvektory}. \textit{Eigenvektor} nebo také \textit{eigenface} je komponenta jednoho původního obličeje. 
+Ten lze zpětně získat lineární kombinací $k$ \textit{eigenvektorů}, kde $k<=$\textit{(počet vstupních obličejů testovací sady)} (+ odečtený \textit{průměrný obličej}). \textit{Eigenvektor} je zároveň vlastním vektorem kovarianční matice. Pokud seřadíme tyto vlastní vektory podle
+jím příslušejících vlastních čísel, získáme tím \textit{eigenvektory} seřazené podle důležitosti. Z nich vybereme právě
+oněch \textit{k} nejvýznamnějších eigenvektorů, ze kterých lze lineární kombinací bez významné ztráty získat původní
+obličej (právě číslo k je jedním z parametrů ovlivňujících úspěšnost identifikace neznámého obličeje vůči
+\textit{tréninkové sadě}).
+
+Problémem je, že matice $C$ bude obsahovat (v našem případě) 4096x4096 prvků a nalezení vlastních vektorů v takovéto matici je výpočetně velmi náročné. My je však potřebujeme. Jak je tedy získat? Odpověď zní: z kovarianční matice s redukovanou dimenzí $C=A^TxA$. Nová kovarianční matice s redukovanou dimenzí tak bude řádu $nxn$ (kde $n$ je počet obličejů ve vstupní \textit{tréninkové sadě}). Získání vlastních vektorů z této matice je tedy řádově rychlejší a úspornější. Celkem tedy získáme $n$ možných eigenvektorů o rozměru $nx1$ (srovnejte s 4096 eigenvektory o rozměrech
+4096x1 z našeho příkladu k neredukované kovarianční matici).
+
+Problém je, že potřebujeme, aby naše \textit{eigenfaces} reprezentující původní \textit{tréninkovou sadu} byly v původní dimenzi. Proto
+po vyhledání k nejvýznamnějších \textit{eigenvektorů} potřebujeme tyto namapovat zpět do původního prostoru o původní dimenzi.
+K tomuto účelu si označme \textit{eigenvektor} v původní dimenzi jako vektor $u_i$ a \textit{eigenvektor} v redukované \textit{kovarianční matici}
+jako $v_i$. Mapování pak provedeme podle vztahu $u_i=Av_i$, kde $A$ je naše matice\textit{normalizovaných obličejových vektorů} (viz dřívější text).
+
+\subsubsection*{Váhový vektor}
+
+Označme si nyní $k$ nejvýznamnějších \textit{eigenvektorů} jako vektory $w_1$, $w_2$, ... $w_k$. Vektor $[w_1, w_2, ... w_k]^T$ budeme označovat jako \textit{váhový vektor}. Ten je základem \textit{PCA}, jelikož lineární kombinací jednotlivých prvků tohoto vektoru (které jsou seřazeny podle "váhy" - míry zastoupení v původním obličeji) a přičtením \textit{průměrného obličeje} získáme původní obličej z \textit{tréninkové sady}.
+
+Tím je fáze tréninku dokončena.
+
+\subsubsection*{Rozpoznání neznámého obličeje}
+
+Rozpoznání neznámeho obličeje pak probíhá následovně:
+
+\begin{itemize}
+	\item preprocessing (viz dřívější text)
+	\item převedení obličeje do \textit{obličejového vektoru}
+	\item normalizace \textit{obličejového vektoru} - opět viz dřívější text, použije se \textit{průměrný obličej} z tréninkové fáze
+	\item vypočítat kombinaci $k$ eigenvektorů
+	\item sestavení\textit{ váhového vektoru} neznámého obličeje
+	\item porovnání \textit{váhového vektoru} s \textit{váhovými vektory} získanými v tréninkové fázi (výpočet rozdílu, stanovení hranic pro porovnávání)
+\end{itemize}
+
+\section{Popis implementace}
+
+Aneb jak by systém mohl fungovat.
+
+\subsection{Use case}
+
+Mám k dispozici sadu fotografií známých osob. Tyto nahraji do systému (proběhne tréninková fáze). Dále předložím systému novou, neznámou fotografii a budu chtít identifikovat osobu, která se na fotografii nachází.
+
+\subsection{Vstupní data}
+
+Některá z veřejných databází. Fotografie by měly být pořízeny za stejných světelných podmínek, stejnou technikou, ze stejné vzdálenosti a se stejným výrazem pro všechny fotografované osoby (viz vlastnosti a nedostatky statistických metod).
+
+Z těchto důvodů byla vybrána databáze AT\&T, dostupná na URL \url{http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html}.
+
+\subsection{Technické prostředky}
+
+\begin{itemize}
+	\item Systém bude naprogramován v Javě
+	\item Pro perzistenci výsledků tréninkové fáze bude použita databáze H2 a ORM/JPA provider Hibernate
+	\item Pro práci s obrázky bude použita knihovna OpenCV a oficiální Java wrapper.
+\end{itemize}
+
+\section{Použití aplikace}
+
+Aneb vše od získání zdrojových kódů přes jejich sestavení až po manuál k použití aplikace.
+
+\subsection{Systémové požadavky}
+
+Pro sestavení aplikace bude potřeba následující:
+
+	\begin{itemize}
+		\item x86/x86\_64 CPU (aplikace využívá nativní knihovnu OpenCV)
+		\item OS Linux/Windows
+		\item Git
+		\item Java Development Kit 1.7
+		\item Maven >=2
+		\item pdflatex pro případne sestavení doprovodného dokumentu a prezentace
+	\end{itemize}
+
+	Hotový build by si měl z výše zmíněné množiny vystačit pouze s OS a Java Runtime Environment 1.7.
+
+	\subsection{Získání zdrojových kódů a testovacích dat}
+
+		Dle domluvy (velikost přes 100MB a binární data) na mém osobním Githubu:
+			\begin{verbatim}
+			# klonovani git repositare se zdrojovymi kody a testovacimi daty
+			/lokalni/adresar/$ git clone git://github.com/and146/DOKEigenfaces
+			\end{verbatim}
+
+\subsection{Sestavení spustitelného balíku}
+    
+	Pomocí \textit{Maven}:
+	
+    \begin{verbatim}
+	# pripadny presun do slozky projektu po pullnuti z Githubu
+	/lokalni/adresar/$ cd DOKEigenfaces
+    
+	# sestaveni dokumentace (javadocs) - generuje do adresare "target/site/apidocs"
+	/lokalni/adresar/DOKEigenfaces$ mvn javadoc:javadoc 
+	
+	# sestaveni spustitelneho baliku - "uber-Eigenfaces-1.0-SNAPSHOT.jar"
+	/lokalni/adresar/DOKEigenfaces$ mvn package 
+	\end{verbatim}    
+    
+	Sestavení doprovodného dokumentu a prezentace pomocí \textit{pdflatex}:
+	
+	\begin{verbatim}
+	/lokalni/adresar/DOKEigenfaces$ cd doc # presun do slozky s dokumentaci
+	
+	/lokalni/adresar/DOKEigenfaces/doc$ pdflatex dok_documentation.tex # dokument
+	/lokalni/adresar/DOKEigenfaces/doc$ pdflatex dok_documentation.tex # znovu (cislovani)
+	/lokalni/adresar/DOKEigenfaces/doc$ pdflatex dok_presentation.tex # prezentace
+	/lokalni/adresar/DOKEigenfaces/doc$ pdflatex dok_presentation.tex # znovu (cislovani)
+    \end{verbatim}  
+    
+\subsection{Spuštění aplikace} 
+
+Jako klasický JAR (bez parametrů vypíše nápovědu, viz příloha \ref{help}):
+
+	\begin{verbatim}
+	/lokalni/adresar/DOKEigenfaces$ java -jar target/uber-Eigenfaces-1.0-SNAPSHOT.jar
+	\end{verbatim} 
+
+\label{heap_alert}
+\textbf{Upozornění:} pokud budete perzistovat tréninkovou sadu, nebo ji naopak z databáze načítat, řekne si \textit{Hibernate} o poměrně značné množství paměti. Téměř jistě bude v takovém případě nutné spouštět aplikaci s větším alokovaným heapem pro JVM:
+
+	\begin{verbatim}
+	java -Xms512m -Xmx2048m -jar target/uber-Eigenfaces-1.0-SNAPSHOT.jar
+	\end{verbatim}
+	
+Je potřeba také zmínit, že persistence více než 100MB dat zabere poměrně hodně času (řádově minuty). Lze ji však obejít spojením tréninkové a rozpoznávací fáze do jednoho příkazu (viz dále).
+
+\subsection{Workflow a manuál k aplikaci}
+\label{manual}
+Algoritmus rozpoznávání obličeje pomocí eigenfaces má dvě fáze: tréninkovou a rozpoznávací. Nejprve je tedy nutné dodat nějaká tréninková data (ve formě XML odkazujícího na soubory - viz adresář \textit{sample\_data} a příloha \ref{trainingxml}):
+    
+	\begin{verbatim}    
+    # treninkova faze s ulozenim vysledku treninku do interni databaze
+    $ java -jar target/uber-Eigenfaces-1.0-SNAPSHOT.jar \
+    	-t sample_data/training-set.xml -p
+    \end{verbatim}
+
+Nezapomeňte prosím, že bude pravděpodobně nutné navýšit velikost heapu JVM\ref{heap_alert}.
+
+Platí, že v jeden okamžik může existovat (být uložena) pouze jedna tréninková sada (uložení však není nutné, viz dále) - pokus o uložení druhé skončí vyjímkou.
+  
+Nyní je možné si otestovat "confidentalitu" rozpoznávání (parametr \textit{-te}) - aplikace projde každý obrázek v tréninkové sadě jako neznámý a pokusí se jej identifikovat - očekávána je pokud možno maximální úspěšnost:
+	
+	\begin{verbatim} 
+    # test rozpoznani vsech treninkovych obliceju vuci treninkovym oblicejum
+    # VYZADUJE jiz perzistovana treninkova data, jinak je potreba volat spolu 
+    # s "-t <xml_s_daty>" - viz vyse
+    
+    java -jar target/uber-Eigenfaces-1.0-SNAPSHOT.jar -te
+	\end{verbatim}
+	
+Rozpoznání neznámého obličeje lze provést např. tak, že před tréninkovou fází odstraním z XML jeden soubor, provedu trénink a následně dám tento odstraněný soubor jako argumet aplikaci - je potřeba uvést, že rozpoznání vyžaduje, aby byla již uložena, nebo alespoň na příkazové řádce zadána tréninková data.
+
+	\begin{verbatim} 
+    # rozpoznavaci faze - VYZADUJE jiz perzistovana treninkova data, jinak 
+    # je potreba volat spolu s "-t <xml_s_daty>" - viz vyse
+    
+    java -jar target/uber-Eigenfaces-1.0-SNAPSHOT.jar \
+    	-r <soubor_s_oblicejem_k_rozpoznani>
+	\end{verbatim}	
+
+Popř. je možné spustit další "testovací scénář" (parametr \textit{-ts}), kdy je z každé sady fotek k dané osobě obsažené v tréninkové sadě jedna fotografie odstraněna, aplikace je "přetrénována" znovu a tyto odejmuté fotografie jsou použity jako testovací (určené k rozpoznání). Očekávaná úspěšnost by se měla pohybovat přibližně nad 80\% \cite{jafri}.
+
+	\begin{verbatim}
+	# test rozpoznani odejmutych treninkovych obliceju vuci zbyvajicim oblicejum
+	# VYZADUJE jiz perzistovana treninkova data, jinak je potreba volat spolu 
+	# s "-t <xml_s_daty>" - viz vyse
+	
+    java -jar target/uber-Eigenfaces-1.0-SNAPSHOT.jar -ts
+	\end{verbatim}	
+	
+Všechny kroky lze samozřejmě provést i najednou, zde například tréninková a rozpoznávací fáze zároveň (zde není nutná perzistence tréninkových dat):
+	
+	\begin{verbatim}
+    $ java -jar target/uber-Eigenfaces-1.0-SNAPSHOT.jar \
+    	-t sample_data/training-set.xml -r sample_data/orl_faces/<vynechany_oblicej>
+    \end{verbatim}
+
+Asi nejužitečnější demonstrační use-case je spuštění tréninkové fáze bez persistence a spolu s ní obou testovacích scénářů:
+
+	\begin{verbatim}
+	# pravdepodobne nejlepsi spusteni pro demonstracni ucely	
+	$ java -jar target/uber-Eigenfaces-1.0-SNAPSHOT.jar \
+		-t sample_data/training-set.xml -te -ts 
+	\end{verbatim}
+
+Aplikace má celou řadu dalších parametrů, které lze volitelně kombinovat (např. vymazání tréninkové sady z interní databáze, debug mód, logování do souboru, uložení průměrného obličeje do souboru), kompletní seznam lze získat pomocí parametru \textit{-h} nebo \textit{--help}:
+    
+    \begin{verbatim}
+    # vypsani napovedy
+    $ java -jar target/uber-Eigenfaces-1.0-SNAPSHOT.jar --help
+	\end{verbatim}
+
+\subsection{Známé problémy}
+
+Drobné bugy, které jsou v aktuální verzi obsaženy (ke všem existuje workaround):
+
+\begin{itemize}
+	\item občasaná chyba při mazání perzistované tréninkové sady, lze vyřešit ručním smazáním interní databáze (celý adresář \textit{data})
+	\item doba a atomičnost perzistování tréninkové sady - perzistence není nutná, pokud v rámci jednoho příkazu proběhne i rozpoznávací fáze
+	\item občasný bílý obrázek, pokud ukládám průměrný obličej z již perzistované tréninkové sady
+\end{itemize}
+
+\section{Závěr}
+
+Aplikace obsahuje dva vestavěné testovací scénáře popsané v části \ref{manual}. 
+
+První z nich (parametr \textit{-te}) prochází každý obrázek v tréninkové sadě a snaží se jej rozpoznat. Je očekávána 100\% úspěšnost s maximální jistotou rozpoznání, což aplikace splňuje.
+
+Druhý scénář (parametr \textit{-ts}) vyžaduje, aby ke každé osobě existovaly v tréninkové sadě alespoň dvě fotografie. Následně je od každé osoby jedna fotografie vyjmuta, aplikace je znovu "přetrénována" s touto redukovanou tréninkovou sadou a vyjmuté fotografie jsou použity jako testovací (k rozpoznání). Dosažená úspěšnost je u vzorové testovací sady 97,5\%, což odpovídá výsledkům dosahovaných u eigenfaces algoritmu\cite{jafri}.
+
+\begin{thebibliography}{9}
+
+	\bibitem{jafri} JAFRI Ramid a Hamid R. ARABNIA. A Survey of Face Recognition Techniques. [online]. 2009 [cit. 2013-11-30]. Dostupné z: http://www.cosy.sbg.ac.at/~uhl/face\_recognition.pdf
+	
+	\bibitem{cuni} BARTÁK Jakub a Zdeněk BĚHAN. Face recognition, Using PCA and EST. [online]. 2013 [cit. 2013-11-30]. Dostupné z: http://ksvi.mff.cuni.cz/~mraz/nn/nnpres07/Face\_recognition.ppt
+	
+	\bibitem{hewitt} HEWITT Robin. Seeing With OpenCV - A Five-Part Series. [online]. 2007 [cit. 2013-12-25]. Dostupné z: http://www.cognotics.com/opencv/servo\_2007\_series/index.html
+	
+\end{thebibliography}
+
+\appendix 
+\section{Kompletní nápověda aplikace}
+\label{help}
+
+\begin{verbatim}
+usage: uber-Eigenfaces-1.0-SNAPSHOT.jar
+ -af,--save-average-face <arg>          Saves the average face to a
+                                        specified file.
+ -c,--cleanup-database                  clean up database containing the
+                                        last training set
+ -d,--debug                             enables the debug mode (maximal
+                                        verbosity)
+ -h,--help                              show this help
+ -l,--log <arg>                         enables the logging to a file
+ -p,--persist-training-set              Persists the provided training set
+ -r,--recognize-face <arg>              path to the image file required to
+                                        recognize
+ -t,--training-set-xml <arg>            path to the XML containing the
+                                        training set
+ -te,--test-recognizer-existing-faces   tests the recognizer's confidence
+                                        by attempting to recognize each
+                                        item in the training set
+ -ts,--test-recognizer-skipped-faces    tests the recognizer's confidence
+                                        by attempting to recognize one
+                                        skipped face of each person in the
+                                        training set
+
+\end{verbatim}
+
+\section{Struktura tréninkového XML}
+\label{trainingxml}
+
+\begin{verbatim}
+<?xml version="1.0"?>
+<training-set>
+    <person id="s1">
+        <photo>orl_faces/s1/1.pgm</photo>
+        <photo>orl_faces/s1/2.pgm</photo>
+        <photo>orl_faces/s1/3.pgm</photo>
+    </person>
+    <person id="s2">
+        <photo>orl_faces/s2/1.pgm</photo>
+        <photo>orl_faces/s2/2.pgm</photo>
+        <photo>orl_faces/s2/3.pgm</photo>
+    </person>
+    <person id="s3">
+        <photo>orl_faces/s3/1.pgm</photo>
+        <photo>orl_faces/s3/2.pgm</photo>
+        <photo>orl_faces/s3/3.pgm</photo>
+    </person>
+</training-set>
+
+\end{verbatim}
+
+\end{document}
